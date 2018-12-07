@@ -1,0 +1,4 @@
+function XOR(x,y)
+	return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
+//return [((x[i]+y[i])mod 2) :i in [1..#x]];
+end function;
