@@ -1,4 +1,27 @@
+//x,y seq of same length => seq
+function AND(x,y)
+	return [(x[i]*y[i]) : i in [1..#x]];
+end function;
+
+function OR(x,y)
+	tmp:=[];
+  	for i in [1..#x] do
+    	if ((x[i] eq 1) or (y[i] eq 1)) then
+      		tmp[i]:=1;
+    	else 
+    		tmp[i]:=0;
+    	end if;
+  	end for;
+	
+	return tmp;
+end function;
+
 function XOR(x,y)
 	return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
 //return [((x[i]+y[i])mod 2) :i in [1..#x]];
+end function;
+
+function NOT(x)
+	return [(EuclideanNorm(x[i]-1)) : i in [1..#x]];
+//return [((x[i]+1)mod 2) : i in [1..#x]];
 end function;
