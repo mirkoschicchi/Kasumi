@@ -155,18 +155,3 @@ function FO (I, KO, KI)
 	return L cat R;
 
 end function;
-
-//DA SCRIVERE IL KEY SCHEDULE
-
-//I 32-bit, RK round key, r round -> O 32-bit
-function f(I, RK, r)
-  KL, KO, KI := KeySchedule(RK);
-
-  //odd round
-  if ((r mod 2) eq 1) then
-    return FO(FL(I,KL),KO,KI);
-  //even round
-  else
-    return FL(FO(I,KO,KI),KL);
-  end if;
-end function;
