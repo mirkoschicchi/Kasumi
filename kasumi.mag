@@ -1,3 +1,10 @@
+/*
+//Test Vectors as int
+P := 0x1630403648CF005F;
+K := 0x2F17EC3A920E3F075CD4F36F522D3A5B;
+C := 0x39DEFDB13FFB9BB3;
+*/
+
 
 // CONSTANTS
 
@@ -49,25 +56,25 @@ S9 := [167,239,161,379,391,334,  9,338, 38,226, 48,358,452,385, 90,397,
 C := [0x0123, 0x4567, 0x89AB, 0xCDEF, 0xFEDC, 0xBA98, 0x7654, 0x3210];
 
 function XOR(x,y)
-	return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
+  return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
 //return [((x[i]+y[i])mod 2) :i in [1..#x]];
 end function;
 
 function AND(x,y)
-	return [(x[i]*y[i]) : i in [1..#x]];
+  return [(x[i]*y[i]) : i in [1..#x]];
 end function;
 
 function OR(x,y)
-	tmp:=[];
-  	for i in [1..#x] do
-    	if ((x[i] eq 1) or (y[i] eq 1)) then
-      		tmp[i]:=1;
-    	else 
-    		tmp[i]:=0;
-    	end if;
-  	end for;
-	
-	return tmp;
+  tmp:=[];
+    for i in [1..#x] do
+      if ((x[i] eq 1) or (y[i] eq 1)) then
+          tmp[i]:=1;
+      else 
+        tmp[i]:=0;
+      end if;
+    end for;
+  
+  return tmp;
 end function;
 
 // I and KL 32 bit
@@ -108,56 +115,56 @@ FI := function(I, KI)
     KI2 := KI[8..16];
 
     L1 := R0;
-    R1 := XOR(PadSeq(Reverse(Intseq(S9[Seqint(Reverse(L0), 2)], 2)), 9), ZE(R0));
-    #R1;
+    R1 := XOR(PadSeq(Reverse(Intseq(S9[Seqint(Reverse(L0), 2)+1], 2)), 9), ZE(R0));
+
     L2 := XOR(R1, KI2);
-    R2 := XOR(XOR(PadSeq(Reverse(Intseq(S7[Seqint(Reverse(L1), 2)], 2)), 7), TR(R1)), KI1);
+    R2 := XOR(XOR(PadSeq(Reverse(Intseq(S7[Seqint(Reverse(L1), 2)+1], 2)), 7), TR(R1)), KI1);
 
     L3 := R2;
-    R3 := XOR(PadSeq(Reverse(Intseq(S9[Seqint(Reverse(L2), 2)], 2)), 9), ZE(R2));
+    R3 := XOR(PadSeq(Reverse(Intseq(S9[Seqint(Reverse(L2), 2)+1], 2)), 9), ZE(R2));
 
-    L4 := XOR(PadSeq(Reverse(Intseq(S7[Seqint(Reverse(L3), 2)], 2)), 7), TR(R3));
+    L4 := XOR(PadSeq(Reverse(Intseq(S7[Seqint(Reverse(L3), 2)+1], 2)), 7), TR(R3));
     R4 := R3;
 
     return L4 cat R4;
 end function;
 
 function XOR(x,y)
-	return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
+  return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
 end function;
 
+// I 32-bit, KO and KI 48-bit
 function FO (I, KO, KI)
 
-	L := I[1..16];
-	R := I[17..32];
+  L := I[1..16];
+  R := I[17..32];
 
-	KOi := [];
+  KOi := [];
 
-	KOi := Append(KOi, KO[1..16]);
-	KOi := Append(KOi, KO[17..32]);
-	KOi := Append(KOi, KO[33..48]);
+  KOi := Append(KOi, KO[1..16]);
+  KOi := Append(KOi, KO[17..32]);
+  KOi := Append(KOi, KO[33..48]);
 
-	KIi := [];
+  KIi := [];
 
-	KIi := Append(KIi, KI[1..16]);
-	KIi := Append(KIi, KI[17..32]);
-	KIi := Append(KIi, KI[33..48]);
+  KIi := Append(KIi, KI[1..16]);
+  KIi := Append(KIi, KI[17..32]);
+  KIi := Append(KIi, KI[33..48]);
 
-	for j in [1..3] do
-		PrevR := R;
-		PrevL := L;
+  for j in [1..3] do
+    PrevR := R;
+    PrevL := L;
 
-		R := XOR(FI( XOR(PrevL, KOi[j]), KIi[j]), PrevR);
-		L := PrevR;
-	end for;
+    R := XOR(FI( XOR(PrevL, KOi[j]), KIi[j]), PrevR);
+    L := PrevR;
+  end for;
 
-	return L cat R;
+  return L cat R;
 
 end function;
 
-//DA SCRIVERE IL KEY SCHEDULE
-// Key of 128-bit
-KeySchedule := function(K, round)
+// K key of 128-bit -> RK seq of round keys [KL,KO,KI]
+KeySchedule := function(K)
     // K1 := K[1..16];
     // K2 := K[17..32];
     // K3 := K[33..48];
@@ -169,58 +176,83 @@ KeySchedule := function(K, round)
 
     Key := [K[1..16], K[17..32], K[33..48], K[49..64], K[65..80], K[81..96], K[97..112], K[113..128]];
 
-    Kj := [];
+    // NewKey seq di seq che contiene i Kj' del pdf
+    NewKey := [];
     for j in [1..8] do
-        Kj[j] := Append(Kj, XOR(Key[j], C[j]));
+        NewKey := Append(NewKey,XOR(Key[j], PadSeq(Reverse(Intseq(C[j],2)),16)));
     end for;
     KL := [];
     KO := [];
     KI := [];
+    RK := [];
+
+    /*
     Kj6Shift := Rotate(Kj, 6);
     Kj4Shift := Rotate(Kj, 4);
     Kj5Shift := Rotate(Kj, 5);
     Kj1Shift := Rotate(Kj, 1);
-
     Key7Shift := Rotate(Key, 7);
     Key3Shift := Rotate(Key, 3);
     Key2Shift := Rotate(Key, 2);
+  */
 
-    KL := Append(KL, Rotate(Key[round], -1));
-    KL := Append(KL, Kj6Shift[round]);
+  for i in [1..8] do
+      KL := KL cat Rotate(Key[i], -1);
+      KL := KL cat NewKey[((i+1) mod 8) +1];
 
-    KO := Append(KO, Rotate(Key7Shift[round], -5));
-    KO := Append(KO, Rotate(Key3Shift[round], -8));
-    KO := Append(KO, Rotate(Key2Shift[round], -13));
+      KO := KO cat Rotate(Key[(i mod 8) +1], -5);
+      KO := KO cat Rotate(Key[((i+4) mod 8) +1], -8);
+      KO := KO cat Rotate(Key[((i+5) mod 8) +1], -13);
 
-    KI := Append(KI, Kj4Shift[round]);
-    KI := Append(KI, Kj5Shift[round]);
-    KI := Append(KI, Kj1Shift[round]);
+      KI := KI cat NewKey[((i+3) mod 8) +1];
+      KI := KI cat NewKey[((i+4) mod 8) +1];
+      KI := KI cat NewKey[((i+6) mod 8) +1];
 
-    return KL, KO, KI;
+      RK := Append(RK, [KL,KO,KI]);
+  end for;
+
+    return RK;
 end function;
 
-//I 32-bit, RK round key, r round -> O 32-bit
-function f(I, RK, r)
-  KL, KO, KI := KeySchedule(RK, r);
+//I 32-bit, RK round key [KL,KO,KI], round int -> O 32-bit
+function f(I, RK, round)
+  KL := RK[1];
+  KO := RK[2];
+  KI := RK[3];
 
   //odd round
-  if ((r mod 2) eq 1) then
-    return FO(FL(I,KL),KO,KI);
+  if ((round mod 2) eq 1) then
+      return FO(FL(I,KL),KO,KI);
   //even round
   else
-    return FL(FO(I,KO,KI),KL);
+      return FL(FO(I,KO,KI),KL);
   end if;
 end function;
 
+//P string of 8 bytes, K string of 16 bytes
 Kasumi := function(P, K)
-    Pbinary := Intseq(P, 2);
-    Pbinary := PadSeq(Pbinary, 64);
 
-    Kbinary := Intseq(K, 2);
-    Kbinary := PadSeq(Kbinary, 128);
+  //MANCA CONVERSIONE STRING TO HEX/INT/BIN 
 
-    L := Pbinary[1..32];
-    R := Pbinary[33..64];
+  //per ora supponiamo P, K int
+    Pbinary := PadSeq(Intseq(P, 2),64);
+    Kbinary := PadSeq(Intseq(K, 2),128);
+
+  RK := KeySchedule(Kbinary);
+
+    L0 := Pbinary[1..32];
+    R0 := Pbinary[33..64];
+
+    R:=[L0];
+    L:=[XOR(R0, f(L0, RK[1], 1))];
+
+    for i in [2..8] do
+      R := Append(R, L[i-1]);
+      L := Append(L, XOR(R[i-1], f(L[i-1], RK[i], i))); 
+    end for;
+
+    return L[8] cat R[8];
+/*
     round1Ris := XOR(f(L, Kbinary, 1), R);
     
     round2Ris := XOR(f(round1Ris, Kbinary, 2), L);
@@ -238,4 +270,5 @@ Kasumi := function(P, K)
     round8Ris := XOR(f(round7Ris, Kbinary, 8), round6Ris);
 
     return round8Ris cat round7Ris;
+*/
 end function;
