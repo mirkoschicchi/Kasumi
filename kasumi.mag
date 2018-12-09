@@ -77,6 +77,22 @@ function OR(x,y)
   return tmp;
 end function;
 
+function XOR(x,y)
+  return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
+end function;
+
+PadSeq := function(n, len)
+    return [0 : i in [1..len - #n]] cat n;
+end function;
+
+function StringToBin(string)
+  Bin := [];
+  for i in [1..#string] do
+    Bin := Bin cat PadSeq(Reverse(Intseq(StringToInteger(string[i],16),2)),4);
+  end for;
+  return Bin;
+end function;
+
 // I and KL 32 bit
 FL := function(I, KL)
     KL1 := KL[1..16];
@@ -101,11 +117,6 @@ TR := function(x)
     return x[3..9];
 end function;
 
-
-PadSeq := function(n, len)
-    return [0 : i in [1..len - #n]] cat n;
-end function;
-
 // I 16-bit, KI 16-bit subkey
 FI := function(I, KI)
     L0 := I[1..9];
@@ -127,10 +138,6 @@ FI := function(I, KI)
     R4 := R3;
 
     return L4 cat R4;
-end function;
-
-function XOR(x,y)
-  return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
 end function;
 
 // I 32-bit, KO and KI 48-bit
@@ -214,6 +221,7 @@ KeySchedule := function(K)
     return RK;
 end function;
 
+
 //I 32-bit, RK round key [KL,KO,KI], round int -> O 32-bit
 function f(I, RK, round)
   KL := RK[1];
@@ -232,16 +240,13 @@ end function;
 //P string of 8 bytes, K string of 16 bytes
 Kasumi := function(P, K)
 
-  //MANCA CONVERSIONE STRING TO HEX/INT/BIN 
+  Pbin := StringToBin(P);
+  Kbin := StringToBin(K);
 
-  //per ora supponiamo P, K int
-    Pbinary := PadSeq(Intseq(P, 2),64);
-    Kbinary := PadSeq(Intseq(K, 2),128);
+  RK := KeySchedule(Kbin);
 
-  RK := KeySchedule(Kbinary);
-
-    L0 := Pbinary[1..32];
-    R0 := Pbinary[33..64];
+    L0 := Pbin[1..32];
+    R0 := Pbin[33..64];
 
     R:=[L0];
     L:=[XOR(R0, f(L0, RK[1], 1))];
