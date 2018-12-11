@@ -44,7 +44,6 @@ S9 := [167,239,161,379,391,334,  9,338, 38,226, 48,358,452,385, 90,397,
 
 function XOR(x,y)
   return [(EuclideanNorm(x[i]-y[i])) : i in [1..#x]];
-//return [((x[i]+y[i])mod 2) :i in [1..#x]];
 end function;
 
 function AND(x,y)
@@ -234,4 +233,33 @@ Kasumi := function(P, K)
     //converting output in string
     return str cat out;
 
+end function;
+
+
+function KasumiDecryption(C,K)
+  Cbin := StringToBin(C);
+  Kbin := StringToBin(K);
+
+  RK := KeySchedule(Kbin);
+
+    L8 := Cbin[1..32];
+    R8 := Cbin[33..64];
+
+    //old L7 and R7
+    NewL:=[R8];
+    NewR:=[XOR(L8, f(R8, RK[8], 8))];
+
+    for i in [2..8] do
+      NewL := Append(NewL, NewR[i-1]);
+      NewR := Append(NewR, XOR(NewL[i-1], f(NewL[i], RK[9-i], 9-i))); 
+    end for;
+    out := IntegerToString(Seqint(Reverse(NewL[8] cat NewR[8]),2),16);
+
+    str := "";
+    for i in [1..16-#out] do
+      str := str cat "0";
+    end for;
+     
+    //converting output in string
+    return str cat out;
 end function;
