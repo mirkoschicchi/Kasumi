@@ -9,9 +9,20 @@ load "key.txt";
 load "plain.txt";
 load "cipher.txt";
 
-for i in [1..#P] do 
-	if Kasumi(P[i],K[i]) ne C[i] then 
-		error "Error in Encryption\n";
-	end if;
-end for;
-"Dio sia lodato, evviva!";
+procedure Encryption()
+	for i in [1..#P] do 
+		//if KasumiDecryption(C[i],K[i]) ne P[i] then 
+		if Kasumi(P[i],K[i]) ne C[i] then 
+			error "Error in Encryption\n";
+		end if;
+	end for;
+end procedure;
+
+procedure Decryption()
+	for i in [1..#P] do 
+		if KasumiDecryption(C[i],K[i]) ne P[i] then 
+		//if Kasumi(P[i],K[i]) ne C[i] then 
+			error "Error in Decryption\n";
+		end if;
+	end for;
+end procedure;
